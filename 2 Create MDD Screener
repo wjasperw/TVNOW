@@ -1,0 +1,453 @@
+'-----------------------------------------------------
+'Change the Project Name and Path for Each Study
+'-----------------------------------------------------
+#define Project "TV Now"
+#define myPath "K:\TV Now Tracker\Tracking\Wave 1\"
+
+
+'#define Country "All Countries"
+#define Country "US"
+#define Samp 	"Gen"
+
+'-----------------------------------------------------
+'Define Input & Output Datasets
+'-----------------------------------------------------
+
+#define InputSAV myPath + "Data\" + Project + " " + Samp + " " + Country +  " Screener.sav"
+#define InputMDD myPath + "Tabs\Tab Prep\" + Project + " " + Samp + " " + Country +  " Screener.mdd"
+#define TargetDDF myPath + "Tabs\Tab Prep\Data1 " + Country + " Screener.DDF"
+#define TargetMdd myPath + "Tabs\Tab Prep\Data1 " + Country + " Screener.MDD"
+
+
+'-----------------------------------------------------
+'Delete Output Data if Already Exists
+'-----------------------------------------------------
+Event(onbeforejobstart, "")
+	Dim fso
+	Set fso = createobject("Scripting.Filesystemobject")	
+	if fso.FileExists (TargetMdd) Then
+		fso.DeleteFile(TargetMdd)
+	end if
+	if fso.FileExists (TargetDDF) Then
+		fso.DeleteFile(TargetDDF)
+	end if
+	
+	
+	Dim MDM
+
+   ' Create the MDM object 
+   Set MDM = CreateObject("MDM.Document") 
+   ' Open all versions of the Short Drinks sample
+   MDM.Open(InputMDD)
+
+   ' Set up axis expressions for all numeric variables
+   ' that don't already have one
+   CreateAxisExpressions(MDM.Fields)
+
+   Sub CreateAxisExpressions(Fields)
+      Dim Field
+
+      ' Loop through all fields and create an axis expression for 
+      ' all of the numeric variables that don't already have one
+      For Each Field In Fields
+         Select Case Field.ObjectTypeValue
+            Case ObjectTypesConstants.mtVariable   ' Simple variable
+               If Field.DataType = mr.Long Or Field.DataType = mr.Double Then
+                  ' It's a numeric
+                  if Field.Name <> "Overall" then
+	                  If Field.AxisExpression.IsEmpty() Then
+	                     ' It hasn't already got an axis expression, so create one
+	                     Field.AxisExpression = "{e1 'None' expression('" + Field.FullName + "=0'), e2 '1+' expression('" + Field.FullName + _
+	                     	">= 1'), min 'Minimum' min(" + Field.FullName + _
+	                        "), max 'Maximum' max(" + Field.FullName + _
+	                        "), mean 'Mean' mean(" + Field.FullName + _
+	                        "), StdDev 'Standard deviation' StdDev(" + Field.FullName + _
+	                        "), StdErr 'Standard error' StdErr(" + Field.FullName + ")}"
+	                  End If
+	              End if    
+               End If
+            Case ObjectTypesConstants.mtClass, ObjectTypesConstants.mtCompound, _
+              ObjectTypesConstants.mtGrid, ObjectTypesConstants.mtArray
+               ' It's a container, process the contents
+               CreateAxisExpressions(Field.Fields)
+         End Select
+      Next
+   End Sub
+
+   MDM.Save(InputMDD)
+
+   MDM.Close()
+   
+end event
+
+
+
+'-----------------------------------------------------
+'Edit Metadata for Tabs
+'-----------------------------------------------------
+	
+Metadata(ENU, Analysis, Label, myInputDataSource)
+
+
+
+'-----------------------------------------------------
+'Always include Overall & Overall2
+'-----------------------------------------------------
+Overall 			long axis("{'Overall' Base('Overall=1'), e1 'Overall' expression('Overall=1') [IsHidden=TRUE]}");
+Overall2 "Overall" 	long axis("{'Base' Base('Overall=1'), e2 'Unweighted Base' UnWeightedBase('Overall=1'), e1 'Overall' expression('Overall=1') [IsHidden=TRUE]}");
+
+
+'-----------------------------------------------------
+'List All Banner Variables & Hide the Base
+'-----------------------------------------------------
+OverallC  categorical axis("{base() [IsHidden=True], ..}");
+GenderG  categorical axis("{base() [IsHidden=True], ..}");
+Age6gen  categorical axis("{base() [IsHidden=True], ..}");
+Age9  categorical axis("{base() [IsHidden=True], ..}");
+ParBan  categorical axis("{base() [IsHidden=True], ..}");
+Money  categorical axis("{base() [IsHidden=True], ..}");
+Student  categorical axis("{base() [IsHidden=True], ..}");
+YTFreqClient  categorical axis("{base() [IsHidden=True], ..}");
+TVSum  categorical axis("{base() [IsHidden=True], ..}");
+PlatUseClient  categorical axis("{base() [IsHidden=True], ..}");
+EquipOwn  categorical axis("{base() [IsHidden=True], ..}");
+NetflixUse  categorical axis("{base() [IsHidden=True], ..}");
+HuluUse  categorical axis("{base() [IsHidden=True], ..}");
+AmazonUse  categorical axis("{base() [IsHidden=True], ..}");
+DevUseClient  categorical axis("{base() [IsHidden=True], ..}");
+ContView  categorical axis("{base() [IsHidden=True], ..}");
+HHLifeChange  categorical axis("{base() [IsHidden=True], ..}");
+ModulesClient  categorical axis("{base() [IsHidden=True], ..}");
+PayTVSVOD  categorical axis("{base() [IsHidden=True], ..}");
+PayTVSubType  categorical axis("{base() [IsHidden=True], ..}");
+PayTVNonSubA  categorical axis("{base() [IsHidden=True], ..}");
+RaceBan  categorical axis("{base() [IsHidden=True], ..}");
+
+SocUseP3M 	categorical axis("{base() [IsHidden=True], ..}");
+HHNumb 	categorical axis("{base() [IsHidden=True], ..}");
+
+
+
+
+'-----------------------------------------------------
+'Fix Bases for Summary Variables
+'-----------------------------------------------------
+
+'Renaming bipolar questions first:
+
+YTReplace1 categorical axis("{base(), Agree_much_more_with_this_statement 'I think videos on YouTube could replace traditional TV programs for me (Agree much more with this statement)', Agree_somewhat_more_with_this_statement 'I think videos on YouTube could replace traditional TV programs for me (Agree somewhat more with this statement)', Agree_somewhat_more_with_this_statement1 'Watching videos on YouTube is different than watching traditional TV programs and I can''t imagine YouTube videos replacing traditional TV programs for me (Agree somewhat more with this statement)', Agree_much_more_with_this_statement1 'Watching videos on YouTube is different than watching traditional TV programs and I can''t imagine YouTube videos replacing traditional TV programs for me (Agree much more with this statement)'}");
+YTReplace2 categorical axis("{base(), Agree_much_more_with_this_statement 'I think videos on social media could replace traditional TV programs for me (Agree much more with this statement)', Agree_somewhat_more_with_this_statement 'I think videos on social media could replace traditional TV programs for me (Agree somewhat more with this statement)', Agree_somewhat_more_with_this_statement1 'Watching videos on social media platforms is different than watching traditional TV programs and I can''t imagine social media vitional TV programs for me (Agree somewhat more with this statement)', Agree_much_more_with_this_statement1 'Watching videos on social media platforms is different than watching traditional TV programs and I can''t imagine social media vitional TV programs for me (Agree much more with this statement)'}");
+TVAdFeelings1 categorical axis("{base(), Agree_much_more_with_this_statement 'I am willing to pay money in order to find ways to avoid watching commercials  (Agree much more with this statement)', Agree_somewhat_more_with_this_statement 'I am willing to pay money in order to find ways to avoid watching commercials  (Agree somewhat more with this statement)', Agree_somewhat_more_with_this_statement1 'I don’t mind watching commercials from time to timeitional TV programs for me (Agree somewhat more with this statement)', Agree_much_more_with_this_statement1 'I don’t mind watching commercials from time to timeitional TV programs for me (Agree much more with this statement)'}");
+TVAdFeelings2 categorical axis("{base(), Agree_much_more_with_this_statement 'I don’t mind watching commercials that are relevant to me  (Agree much more with this statement)', Agree_somewhat_more_with_this_statement 'I don’t mind watching commercials that are relevant to me  (Agree somewhat more with this statement)', Agree_somewhat_more_with_this_statement1 'I hate watching all commercialsitional TV programs for me (Agree somewhat more with this statement)', Agree_much_more_with_this_statement1 'I hate watching all commercialsitional TV programs for me (Agree much more with this statement)'}");
+
+S15_Equipment_TB categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S15_Equipment1 is not null') [isHidden=TRUE], S15_Equipment1, b2'Base' base('S15_Equipment2 is not null') [isHidden=TRUE], S15_Equipment2, b3'Base' base('S15_Equipment3 is not null') [isHidden=TRUE], S15_Equipment3, b4'Base' base('S15_Equipment4 is not null') [isHidden=TRUE], S15_Equipment4, b7'Base' base('S15_Equipment7 is not null') [isHidden=TRUE], S15_Equipment7, b5'Base' base('S15_Equipment5 is not null') [isHidden=TRUE], S15_Equipment5, b6'Base' base('S15_Equipment6 is not null') [isHidden=TRUE], S15_Equipment6, b8'Base' base('S15_Equipment8 is not null') [isHidden=TRUE], S15_Equipment8, b9'Base' base('S15_Equipment9 is not null') [isHidden=TRUE], S15_Equipment9}");
+S15_Equipment_2B  categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S15_Equipment1 is not null') [isHidden=TRUE], S15_Equipment1, b2'Base' base('S15_Equipment2 is not null') [isHidden=TRUE], S15_Equipment2, b3'Base' base('S15_Equipment3 is not null') [isHidden=TRUE], S15_Equipment3, b4'Base' base('S15_Equipment4 is not null') [isHidden=TRUE], S15_Equipment4, b7'Base' base('S15_Equipment7 is not null') [isHidden=TRUE], S15_Equipment7, b5'Base' base('S15_Equipment5 is not null') [isHidden=TRUE], S15_Equipment5, b6'Base' base('S15_Equipment6 is not null') [isHidden=TRUE], S15_Equipment6, b8'Base' base('S15_Equipment8 is not null') [isHidden=TRUE], S15_Equipment8, b9'Base' base('S15_Equipment9 is not null') [isHidden=TRUE], S15_Equipment9}");
+S15_Equipment_3B  categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S15_Equipment1 is not null') [isHidden=TRUE], S15_Equipment1, b2'Base' base('S15_Equipment2 is not null') [isHidden=TRUE], S15_Equipment2, b3'Base' base('S15_Equipment3 is not null') [isHidden=TRUE], S15_Equipment3, b4'Base' base('S15_Equipment4 is not null') [isHidden=TRUE], S15_Equipment4, b7'Base' base('S15_Equipment7 is not null') [isHidden=TRUE], S15_Equipment7, b5'Base' base('S15_Equipment5 is not null') [isHidden=TRUE], S15_Equipment5, b6'Base' base('S15_Equipment6 is not null') [isHidden=TRUE], S15_Equipment6, b8'Base' base('S15_Equipment8 is not null') [isHidden=TRUE], S15_Equipment8, b9'Base' base('S15_Equipment9 is not null') [isHidden=TRUE], S15_Equipment9}");
+S15_Equipment_4B  categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S15_Equipment1 is not null') [isHidden=TRUE], S15_Equipment1, b2'Base' base('S15_Equipment2 is not null') [isHidden=TRUE], S15_Equipment2, b3'Base' base('S15_Equipment3 is not null') [isHidden=TRUE], S15_Equipment3, b4'Base' base('S15_Equipment4 is not null') [isHidden=TRUE], S15_Equipment4, b7'Base' base('S15_Equipment7 is not null') [isHidden=TRUE], S15_Equipment7, b5'Base' base('S15_Equipment5 is not null') [isHidden=TRUE], S15_Equipment5, b6'Base' base('S15_Equipment6 is not null') [isHidden=TRUE], S15_Equipment6, b8'Base' base('S15_Equipment8 is not null') [isHidden=TRUE], S15_Equipment8, b9'Base' base('S15_Equipment9 is not null') [isHidden=TRUE], S15_Equipment9}");
+S15_Equipment_5B  categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S15_Equipment1 is not null') [isHidden=TRUE], S15_Equipment1, b2'Base' base('S15_Equipment2 is not null') [isHidden=TRUE], S15_Equipment2, b3'Base' base('S15_Equipment3 is not null') [isHidden=TRUE], S15_Equipment3, b4'Base' base('S15_Equipment4 is not null') [isHidden=TRUE], S15_Equipment4, b7'Base' base('S15_Equipment7 is not null') [isHidden=TRUE], S15_Equipment7, b5'Base' base('S15_Equipment5 is not null') [isHidden=TRUE], S15_Equipment5, b6'Base' base('S15_Equipment6 is not null') [isHidden=TRUE], S15_Equipment6, b8'Base' base('S15_Equipment8 is not null') [isHidden=TRUE], S15_Equipment8, b9'Base' base('S15_Equipment9 is not null') [isHidden=TRUE], S15_Equipment9}");
+
+
+S16_ContentP3M_TB categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S16_ContentP3M1 is not null') [isHidden=TRUE], S16_ContentP3M1, b2'Base' base('S16_ContentP3M2 is not null') [isHidden=TRUE], S16_ContentP3M2, b3'Base' base('S16_ContentP3M3 is not null') [isHidden=TRUE], S16_ContentP3M3, b4'Base' base('S16_ContentP3M4 is not null') [isHidden=TRUE], S16_ContentP3M4, b5'Base' base('S16_ContentP3M5 is not null') [isHidden=TRUE], S16_ContentP3M5, b6'Base' base('S16_ContentP3M6 is not null') [isHidden=TRUE], S16_ContentP3M6}");
+S16_ContentP3M_2B  categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S16_ContentP3M1 is not null') [isHidden=TRUE], S16_ContentP3M1, b2'Base' base('S16_ContentP3M2 is not null') [isHidden=TRUE], S16_ContentP3M2, b3'Base' base('S16_ContentP3M3 is not null') [isHidden=TRUE], S16_ContentP3M3, b4'Base' base('S16_ContentP3M4 is not null') [isHidden=TRUE], S16_ContentP3M4, b5'Base' base('S16_ContentP3M5 is not null') [isHidden=TRUE], S16_ContentP3M5, b6'Base' base('S16_ContentP3M6 is not null') [isHidden=TRUE], S16_ContentP3M6}");
+S16_ContentP3M_3B  categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S16_ContentP3M1 is not null') [isHidden=TRUE], S16_ContentP3M1, b2'Base' base('S16_ContentP3M2 is not null') [isHidden=TRUE], S16_ContentP3M2, b3'Base' base('S16_ContentP3M3 is not null') [isHidden=TRUE], S16_ContentP3M3, b4'Base' base('S16_ContentP3M4 is not null') [isHidden=TRUE], S16_ContentP3M4, b5'Base' base('S16_ContentP3M5 is not null') [isHidden=TRUE], S16_ContentP3M5, b6'Base' base('S16_ContentP3M6 is not null') [isHidden=TRUE], S16_ContentP3M6}");
+S16_ContentP3M_4B  categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S16_ContentP3M1 is not null') [isHidden=TRUE], S16_ContentP3M1, b2'Base' base('S16_ContentP3M2 is not null') [isHidden=TRUE], S16_ContentP3M2, b3'Base' base('S16_ContentP3M3 is not null') [isHidden=TRUE], S16_ContentP3M3, b4'Base' base('S16_ContentP3M4 is not null') [isHidden=TRUE], S16_ContentP3M4, b5'Base' base('S16_ContentP3M5 is not null') [isHidden=TRUE], S16_ContentP3M5, b6'Base' base('S16_ContentP3M6 is not null') [isHidden=TRUE], S16_ContentP3M6}");
+S16_ContentP3M_5B  categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S16_ContentP3M1 is not null') [isHidden=TRUE], S16_ContentP3M1, b2'Base' base('S16_ContentP3M2 is not null') [isHidden=TRUE], S16_ContentP3M2, b3'Base' base('S16_ContentP3M3 is not null') [isHidden=TRUE], S16_ContentP3M3, b4'Base' base('S16_ContentP3M4 is not null') [isHidden=TRUE], S16_ContentP3M4, b5'Base' base('S16_ContentP3M5 is not null') [isHidden=TRUE], S16_ContentP3M5, b6'Base' base('S16_ContentP3M6 is not null') [isHidden=TRUE], S16_ContentP3M6}");
+S16_ContentP3M_6B  categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S16_ContentP3M1 is not null') [isHidden=TRUE], S16_ContentP3M1, b2'Base' base('S16_ContentP3M2 is not null') [isHidden=TRUE], S16_ContentP3M2, b3'Base' base('S16_ContentP3M3 is not null') [isHidden=TRUE], S16_ContentP3M3, b4'Base' base('S16_ContentP3M4 is not null') [isHidden=TRUE], S16_ContentP3M4, b5'Base' base('S16_ContentP3M5 is not null') [isHidden=TRUE], S16_ContentP3M5, b6'Base' base('S16_ContentP3M6 is not null') [isHidden=TRUE], S16_ContentP3M6}");
+S16_ContentP3M_7B  categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S16_ContentP3M1 is not null') [isHidden=TRUE], S16_ContentP3M1, b2'Base' base('S16_ContentP3M2 is not null') [isHidden=TRUE], S16_ContentP3M2, b3'Base' base('S16_ContentP3M3 is not null') [isHidden=TRUE], S16_ContentP3M3, b4'Base' base('S16_ContentP3M4 is not null') [isHidden=TRUE], S16_ContentP3M4, b5'Base' base('S16_ContentP3M5 is not null') [isHidden=TRUE], S16_ContentP3M5, b6'Base' base('S16_ContentP3M6 is not null') [isHidden=TRUE], S16_ContentP3M6}");
+S16_ContentP3M_T4B  categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S16_ContentP3M1 is not null') [isHidden=TRUE], S16_ContentP3M1, b2'Base' base('S16_ContentP3M2 is not null') [isHidden=TRUE], S16_ContentP3M2, b3'Base' base('S16_ContentP3M3 is not null') [isHidden=TRUE], S16_ContentP3M3, b4'Base' base('S16_ContentP3M4 is not null') [isHidden=TRUE], S16_ContentP3M4, b5'Base' base('S16_ContentP3M5 is not null') [isHidden=TRUE], S16_ContentP3M5, b6'Base' base('S16_ContentP3M6 is not null') [isHidden=TRUE], S16_ContentP3M6}");
+S16_ContentP3M_MB  categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S16_ContentP3M1 is not null') [isHidden=TRUE], S16_ContentP3M1, b2'Base' base('S16_ContentP3M2 is not null') [isHidden=TRUE], S16_ContentP3M2, b3'Base' base('S16_ContentP3M3 is not null') [isHidden=TRUE], S16_ContentP3M3, b4'Base' base('S16_ContentP3M4 is not null') [isHidden=TRUE], S16_ContentP3M4, b5'Base' base('S16_ContentP3M5 is not null') [isHidden=TRUE], S16_ContentP3M5, b6'Base' base('S16_ContentP3M6 is not null') [isHidden=TRUE], S16_ContentP3M6}");
+
+
+S17_PlatformP3M_TB categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S17_PlatformP3M1 is not null') [isHidden=TRUE], S17_PlatformP3M1, b10'Base' base('S17_PlatformP3M10 is not null') [isHidden=TRUE], S17_PlatformP3M10, b11'Base' base('S17_PlatformP3M11 is not null') [isHidden=TRUE], S17_PlatformP3M11, b12'Base' base('S17_PlatformP3M12 is not null') [isHidden=TRUE], S17_PlatformP3M12, b13'Base' base('S17_PlatformP3M13 is not null') [isHidden=TRUE], S17_PlatformP3M13, b14'Base' base('S17_PlatformP3M14 is not null') [isHidden=TRUE], S17_PlatformP3M14, b15'Base' base('S17_PlatformP3M15 is not null') [isHidden=TRUE], S17_PlatformP3M15, b16'Base' base('S17_PlatformP3M16 is not null') [isHidden=TRUE], S17_PlatformP3M16, b17'Base' base('S17_PlatformP3M17 is not null') [isHidden=TRUE], S17_PlatformP3M17, b18'Base' base('S17_PlatformP3M18 is not null') [isHidden=TRUE], S17_PlatformP3M18, b2'Base' base('S17_PlatformP3M2 is not null') [isHidden=TRUE], S17_PlatformP3M2, b3'Base' base('S17_PlatformP3M3 is not null') [isHidden=TRUE], S17_PlatformP3M3, b4'Base' base('S17_PlatformP3M4 is not null') [isHidden=TRUE], S17_PlatformP3M4, b5'Base' base('S17_PlatformP3M5 is not null') [isHidden=TRUE], S17_PlatformP3M5, b6'Base' base('S17_PlatformP3M6 is not null') [isHidden=TRUE], S17_PlatformP3M6, b7'Base' base('S17_PlatformP3M7 is not null') [isHidden=TRUE], S17_PlatformP3M7, b8'Base' base('S17_PlatformP3M8 is not null') [isHidden=TRUE], S17_PlatformP3M8, b9'Base' base('S17_PlatformP3M9 is not null') [isHidden=TRUE], S17_PlatformP3M9, b19'Base' base('S17_PlatformP3M19 is not null') [isHidden=TRUE], S17_PlatformP3M19 [isFixed = TRUE], B20'Base' base('S17_PlatformP3M20 is not null') [isHidden=TRUE], S17_PlatformP3M20 [isFixed = TRUE],B21'Base' base('S17_PlatformP3M21 is not null') [isHidden=TRUE], S17_PlatformP3M21 [isFixed = TRUE], b22'Base' base('S17_PlatformP3M22 is not null') [isHidden=TRUE], S17_PlatformP3M22 [isFixed = TRUE], b23'Base' base('S17_PlatformP3M23 is not null') [isHidden=TRUE], S17_PlatformP3M23 [isFixed = TRUE], b24'Base' base('S17_PlatformP3M24 is not null') [isHidden=TRUE], S17_PlatformP3M24 [isFixed = TRUE]}");
+S17_PlatformP3M_2B categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S17_PlatformP3M1 is not null') [isHidden=TRUE], S17_PlatformP3M1, b10'Base' base('S17_PlatformP3M10 is not null') [isHidden=TRUE], S17_PlatformP3M10, b11'Base' base('S17_PlatformP3M11 is not null') [isHidden=TRUE], S17_PlatformP3M11, b12'Base' base('S17_PlatformP3M12 is not null') [isHidden=TRUE], S17_PlatformP3M12, b13'Base' base('S17_PlatformP3M13 is not null') [isHidden=TRUE], S17_PlatformP3M13, b14'Base' base('S17_PlatformP3M14 is not null') [isHidden=TRUE], S17_PlatformP3M14, b15'Base' base('S17_PlatformP3M15 is not null') [isHidden=TRUE], S17_PlatformP3M15, b16'Base' base('S17_PlatformP3M16 is not null') [isHidden=TRUE], S17_PlatformP3M16, b17'Base' base('S17_PlatformP3M17 is not null') [isHidden=TRUE], S17_PlatformP3M17, b18'Base' base('S17_PlatformP3M18 is not null') [isHidden=TRUE], S17_PlatformP3M18, b2'Base' base('S17_PlatformP3M2 is not null') [isHidden=TRUE], S17_PlatformP3M2, b3'Base' base('S17_PlatformP3M3 is not null') [isHidden=TRUE], S17_PlatformP3M3, b4'Base' base('S17_PlatformP3M4 is not null') [isHidden=TRUE], S17_PlatformP3M4, b5'Base' base('S17_PlatformP3M5 is not null') [isHidden=TRUE], S17_PlatformP3M5, b6'Base' base('S17_PlatformP3M6 is not null') [isHidden=TRUE], S17_PlatformP3M6, b7'Base' base('S17_PlatformP3M7 is not null') [isHidden=TRUE], S17_PlatformP3M7, b8'Base' base('S17_PlatformP3M8 is not null') [isHidden=TRUE], S17_PlatformP3M8, b9'Base' base('S17_PlatformP3M9 is not null') [isHidden=TRUE], S17_PlatformP3M9, b19'Base' base('S17_PlatformP3M19 is not null') [isHidden=TRUE], S17_PlatformP3M19 [isFixed = TRUE], B20'Base' base('S17_PlatformP3M20 is not null') [isHidden=TRUE], S17_PlatformP3M20 [isFixed = TRUE],B21'Base' base('S17_PlatformP3M21 is not null') [isHidden=TRUE], S17_PlatformP3M21 [isFixed = TRUE], b22'Base' base('S17_PlatformP3M22 is not null') [isHidden=TRUE], S17_PlatformP3M22 [isFixed = TRUE], b23'Base' base('S17_PlatformP3M23 is not null') [isHidden=TRUE], S17_PlatformP3M23 [isFixed = TRUE], b24'Base' base('S17_PlatformP3M24 is not null') [isHidden=TRUE], S17_PlatformP3M24 [isFixed = TRUE]}");
+S17_PlatformP3M_3B categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S17_PlatformP3M1 is not null') [isHidden=TRUE], S17_PlatformP3M1, b10'Base' base('S17_PlatformP3M10 is not null') [isHidden=TRUE], S17_PlatformP3M10, b11'Base' base('S17_PlatformP3M11 is not null') [isHidden=TRUE], S17_PlatformP3M11, b12'Base' base('S17_PlatformP3M12 is not null') [isHidden=TRUE], S17_PlatformP3M12, b13'Base' base('S17_PlatformP3M13 is not null') [isHidden=TRUE], S17_PlatformP3M13, b14'Base' base('S17_PlatformP3M14 is not null') [isHidden=TRUE], S17_PlatformP3M14, b15'Base' base('S17_PlatformP3M15 is not null') [isHidden=TRUE], S17_PlatformP3M15, b16'Base' base('S17_PlatformP3M16 is not null') [isHidden=TRUE], S17_PlatformP3M16, b17'Base' base('S17_PlatformP3M17 is not null') [isHidden=TRUE], S17_PlatformP3M17, b18'Base' base('S17_PlatformP3M18 is not null') [isHidden=TRUE], S17_PlatformP3M18, b2'Base' base('S17_PlatformP3M2 is not null') [isHidden=TRUE], S17_PlatformP3M2, b3'Base' base('S17_PlatformP3M3 is not null') [isHidden=TRUE], S17_PlatformP3M3, b4'Base' base('S17_PlatformP3M4 is not null') [isHidden=TRUE], S17_PlatformP3M4, b5'Base' base('S17_PlatformP3M5 is not null') [isHidden=TRUE], S17_PlatformP3M5, b6'Base' base('S17_PlatformP3M6 is not null') [isHidden=TRUE], S17_PlatformP3M6, b7'Base' base('S17_PlatformP3M7 is not null') [isHidden=TRUE], S17_PlatformP3M7, b8'Base' base('S17_PlatformP3M8 is not null') [isHidden=TRUE], S17_PlatformP3M8, b9'Base' base('S17_PlatformP3M9 is not null') [isHidden=TRUE], S17_PlatformP3M9, b19'Base' base('S17_PlatformP3M19 is not null') [isHidden=TRUE], S17_PlatformP3M19 [isFixed = TRUE], B20'Base' base('S17_PlatformP3M20 is not null') [isHidden=TRUE], S17_PlatformP3M20 [isFixed = TRUE],B21'Base' base('S17_PlatformP3M21 is not null') [isHidden=TRUE], S17_PlatformP3M21 [isFixed = TRUE], b22'Base' base('S17_PlatformP3M22 is not null') [isHidden=TRUE], S17_PlatformP3M22 [isFixed = TRUE], b23'Base' base('S17_PlatformP3M23 is not null') [isHidden=TRUE], S17_PlatformP3M23 [isFixed = TRUE], b24'Base' base('S17_PlatformP3M24 is not null') [isHidden=TRUE], S17_PlatformP3M24 [isFixed = TRUE]}");
+S17_PlatformP3M_4B categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S17_PlatformP3M1 is not null') [isHidden=TRUE], S17_PlatformP3M1, b10'Base' base('S17_PlatformP3M10 is not null') [isHidden=TRUE], S17_PlatformP3M10, b11'Base' base('S17_PlatformP3M11 is not null') [isHidden=TRUE], S17_PlatformP3M11, b12'Base' base('S17_PlatformP3M12 is not null') [isHidden=TRUE], S17_PlatformP3M12, b13'Base' base('S17_PlatformP3M13 is not null') [isHidden=TRUE], S17_PlatformP3M13, b14'Base' base('S17_PlatformP3M14 is not null') [isHidden=TRUE], S17_PlatformP3M14, b15'Base' base('S17_PlatformP3M15 is not null') [isHidden=TRUE], S17_PlatformP3M15, b16'Base' base('S17_PlatformP3M16 is not null') [isHidden=TRUE], S17_PlatformP3M16, b17'Base' base('S17_PlatformP3M17 is not null') [isHidden=TRUE], S17_PlatformP3M17, b18'Base' base('S17_PlatformP3M18 is not null') [isHidden=TRUE], S17_PlatformP3M18, b2'Base' base('S17_PlatformP3M2 is not null') [isHidden=TRUE], S17_PlatformP3M2, b3'Base' base('S17_PlatformP3M3 is not null') [isHidden=TRUE], S17_PlatformP3M3, b4'Base' base('S17_PlatformP3M4 is not null') [isHidden=TRUE], S17_PlatformP3M4, b5'Base' base('S17_PlatformP3M5 is not null') [isHidden=TRUE], S17_PlatformP3M5, b6'Base' base('S17_PlatformP3M6 is not null') [isHidden=TRUE], S17_PlatformP3M6, b7'Base' base('S17_PlatformP3M7 is not null') [isHidden=TRUE], S17_PlatformP3M7, b8'Base' base('S17_PlatformP3M8 is not null') [isHidden=TRUE], S17_PlatformP3M8, b9'Base' base('S17_PlatformP3M9 is not null') [isHidden=TRUE], S17_PlatformP3M9, b19'Base' base('S17_PlatformP3M19 is not null') [isHidden=TRUE], S17_PlatformP3M19 [isFixed = TRUE], B20'Base' base('S17_PlatformP3M20 is not null') [isHidden=TRUE], S17_PlatformP3M20 [isFixed = TRUE],B21'Base' base('S17_PlatformP3M21 is not null') [isHidden=TRUE], S17_PlatformP3M21 [isFixed = TRUE], b22'Base' base('S17_PlatformP3M22 is not null') [isHidden=TRUE], S17_PlatformP3M22 [isFixed = TRUE], b23'Base' base('S17_PlatformP3M23 is not null') [isHidden=TRUE], S17_PlatformP3M23 [isFixed = TRUE], b24'Base' base('S17_PlatformP3M24 is not null') [isHidden=TRUE], S17_PlatformP3M24 [isFixed = TRUE]}");
+S17_PlatformP3M_5B categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S17_PlatformP3M1 is not null') [isHidden=TRUE], S17_PlatformP3M1, b10'Base' base('S17_PlatformP3M10 is not null') [isHidden=TRUE], S17_PlatformP3M10, b11'Base' base('S17_PlatformP3M11 is not null') [isHidden=TRUE], S17_PlatformP3M11, b12'Base' base('S17_PlatformP3M12 is not null') [isHidden=TRUE], S17_PlatformP3M12, b13'Base' base('S17_PlatformP3M13 is not null') [isHidden=TRUE], S17_PlatformP3M13, b14'Base' base('S17_PlatformP3M14 is not null') [isHidden=TRUE], S17_PlatformP3M14, b15'Base' base('S17_PlatformP3M15 is not null') [isHidden=TRUE], S17_PlatformP3M15, b16'Base' base('S17_PlatformP3M16 is not null') [isHidden=TRUE], S17_PlatformP3M16, b17'Base' base('S17_PlatformP3M17 is not null') [isHidden=TRUE], S17_PlatformP3M17, b18'Base' base('S17_PlatformP3M18 is not null') [isHidden=TRUE], S17_PlatformP3M18, b2'Base' base('S17_PlatformP3M2 is not null') [isHidden=TRUE], S17_PlatformP3M2, b3'Base' base('S17_PlatformP3M3 is not null') [isHidden=TRUE], S17_PlatformP3M3, b4'Base' base('S17_PlatformP3M4 is not null') [isHidden=TRUE], S17_PlatformP3M4, b5'Base' base('S17_PlatformP3M5 is not null') [isHidden=TRUE], S17_PlatformP3M5, b6'Base' base('S17_PlatformP3M6 is not null') [isHidden=TRUE], S17_PlatformP3M6, b7'Base' base('S17_PlatformP3M7 is not null') [isHidden=TRUE], S17_PlatformP3M7, b8'Base' base('S17_PlatformP3M8 is not null') [isHidden=TRUE], S17_PlatformP3M8, b9'Base' base('S17_PlatformP3M9 is not null') [isHidden=TRUE], S17_PlatformP3M9, b19'Base' base('S17_PlatformP3M19 is not null') [isHidden=TRUE], S17_PlatformP3M19 [isFixed = TRUE], B20'Base' base('S17_PlatformP3M20 is not null') [isHidden=TRUE], S17_PlatformP3M20 [isFixed = TRUE],B21'Base' base('S17_PlatformP3M21 is not null') [isHidden=TRUE], S17_PlatformP3M21 [isFixed = TRUE], b22'Base' base('S17_PlatformP3M22 is not null') [isHidden=TRUE], S17_PlatformP3M22 [isFixed = TRUE], b23'Base' base('S17_PlatformP3M23 is not null') [isHidden=TRUE], S17_PlatformP3M23 [isFixed = TRUE], b24'Base' base('S17_PlatformP3M24 is not null') [isHidden=TRUE], S17_PlatformP3M24 [isFixed = TRUE]}");
+S17_PlatformP3M_T4B categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S17_PlatformP3M1 is not null') [isHidden=TRUE], S17_PlatformP3M1, b10'Base' base('S17_PlatformP3M10 is not null') [isHidden=TRUE], S17_PlatformP3M10, b11'Base' base('S17_PlatformP3M11 is not null') [isHidden=TRUE], S17_PlatformP3M11, b12'Base' base('S17_PlatformP3M12 is not null') [isHidden=TRUE], S17_PlatformP3M12, b13'Base' base('S17_PlatformP3M13 is not null') [isHidden=TRUE], S17_PlatformP3M13, b14'Base' base('S17_PlatformP3M14 is not null') [isHidden=TRUE], S17_PlatformP3M14, b15'Base' base('S17_PlatformP3M15 is not null') [isHidden=TRUE], S17_PlatformP3M15, b16'Base' base('S17_PlatformP3M16 is not null') [isHidden=TRUE], S17_PlatformP3M16, b17'Base' base('S17_PlatformP3M17 is not null') [isHidden=TRUE], S17_PlatformP3M17, b18'Base' base('S17_PlatformP3M18 is not null') [isHidden=TRUE], S17_PlatformP3M18, b2'Base' base('S17_PlatformP3M2 is not null') [isHidden=TRUE], S17_PlatformP3M2, b3'Base' base('S17_PlatformP3M3 is not null') [isHidden=TRUE], S17_PlatformP3M3, b4'Base' base('S17_PlatformP3M4 is not null') [isHidden=TRUE], S17_PlatformP3M4, b5'Base' base('S17_PlatformP3M5 is not null') [isHidden=TRUE], S17_PlatformP3M5, b6'Base' base('S17_PlatformP3M6 is not null') [isHidden=TRUE], S17_PlatformP3M6, b7'Base' base('S17_PlatformP3M7 is not null') [isHidden=TRUE], S17_PlatformP3M7, b8'Base' base('S17_PlatformP3M8 is not null') [isHidden=TRUE], S17_PlatformP3M8, b9'Base' base('S17_PlatformP3M9 is not null') [isHidden=TRUE], S17_PlatformP3M9, b19'Base' base('S17_PlatformP3M19 is not null') [isHidden=TRUE], S17_PlatformP3M19 [isFixed = TRUE], B20'Base' base('S17_PlatformP3M20 is not null') [isHidden=TRUE], S17_PlatformP3M20 [isFixed = TRUE],B21'Base' base('S17_PlatformP3M21 is not null') [isHidden=TRUE], S17_PlatformP3M21 [isFixed = TRUE], b22'Base' base('S17_PlatformP3M22 is not null') [isHidden=TRUE], S17_PlatformP3M22 [isFixed = TRUE], b23'Base' base('S17_PlatformP3M23 is not null') [isHidden=TRUE], S17_PlatformP3M23 [isFixed = TRUE], b24'Base' base('S17_PlatformP3M24 is not null') [isHidden=TRUE], S17_PlatformP3M24 [isFixed = TRUE]}");
+S17_PlatformP3M_MB categorical axis("{base() [IsHidden=TRUE], b1'Base' base('S17_PlatformP3M1 is not null') [isHidden=TRUE], S17_PlatformP3M1, b10'Base' base('S17_PlatformP3M10 is not null') [isHidden=TRUE], S17_PlatformP3M10, b11'Base' base('S17_PlatformP3M11 is not null') [isHidden=TRUE], S17_PlatformP3M11, b12'Base' base('S17_PlatformP3M12 is not null') [isHidden=TRUE], S17_PlatformP3M12, b13'Base' base('S17_PlatformP3M13 is not null') [isHidden=TRUE], S17_PlatformP3M13, b14'Base' base('S17_PlatformP3M14 is not null') [isHidden=TRUE], S17_PlatformP3M14, b15'Base' base('S17_PlatformP3M15 is not null') [isHidden=TRUE], S17_PlatformP3M15, b16'Base' base('S17_PlatformP3M16 is not null') [isHidden=TRUE], S17_PlatformP3M16, b17'Base' base('S17_PlatformP3M17 is not null') [isHidden=TRUE], S17_PlatformP3M17, b18'Base' base('S17_PlatformP3M18 is not null') [isHidden=TRUE], S17_PlatformP3M18, b2'Base' base('S17_PlatformP3M2 is not null') [isHidden=TRUE], S17_PlatformP3M2, b3'Base' base('S17_PlatformP3M3 is not null') [isHidden=TRUE], S17_PlatformP3M3, b4'Base' base('S17_PlatformP3M4 is not null') [isHidden=TRUE], S17_PlatformP3M4, b5'Base' base('S17_PlatformP3M5 is not null') [isHidden=TRUE], S17_PlatformP3M5, b6'Base' base('S17_PlatformP3M6 is not null') [isHidden=TRUE], S17_PlatformP3M6, b7'Base' base('S17_PlatformP3M7 is not null') [isHidden=TRUE], S17_PlatformP3M7, b8'Base' base('S17_PlatformP3M8 is not null') [isHidden=TRUE], S17_PlatformP3M8, b9'Base' base('S17_PlatformP3M9 is not null') [isHidden=TRUE], S17_PlatformP3M9, b19'Base' base('S17_PlatformP3M19 is not null') [isHidden=TRUE], S17_PlatformP3M19 [isFixed = TRUE], B20'Base' base('S17_PlatformP3M20 is not null') [isHidden=TRUE], S17_PlatformP3M20 [isFixed = TRUE],B21'Base' base('S17_PlatformP3M21 is not null') [isHidden=TRUE], S17_PlatformP3M21 [isFixed = TRUE], b22'Base' base('S17_PlatformP3M22 is not null') [isHidden=TRUE], S17_PlatformP3M22 [isFixed = TRUE], b23'Base' base('S17_PlatformP3M23 is not null') [isHidden=TRUE], S17_PlatformP3M23 [isFixed = TRUE], b24'Base' base('S17_PlatformP3M24 is not null') [isHidden=TRUE], S17_PlatformP3M24 [isFixed = TRUE]}");
+
+
+S16_ContentP3M1  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M2  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M3  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M4  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M5  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M6  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M7  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M8  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M9  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M10  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M11  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M12  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M13  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M14  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M15  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M16  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M17  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M18  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M19  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M20  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+S16_ContentP3M21  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+ContentP3MNet  categorical axis("{base(), A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer, 'Net : Any Portable Device' net({A_computer_desktop_or_laptop 'A computer (desktop or laptop)', Net1 'Net : Mobile Device' net({A_smartphone 'A smartphone', A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB 'A tablet (e.g. iPad, Amazon Fire or Samsung Galaxy TAB)'})}), A_digital_projector, I_don_t_watch_this_type_of_content_in_any_of_these_ways, I_don_t_watch_this_type_of_content_at_all}");
+
+S17_PlatformP3M1  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M2  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M3  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M4  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M5  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M6  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M7  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M8  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M9  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M10  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M11  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M12  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M13  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M14  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M15  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M16  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M17  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M18  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M19  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M20  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M21  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M22  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M23  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+S17_PlatformP3M24  categorical axis("{base(), 'On a TV, Computer, Tablet or Smartphone' net({On_a_TV 'On a TV', On_a_computer 'On a computer', Net1 'Mobile Device' net({On_a_tablet 'On a tablet', On_a_smartphone 'On a smartphone'})}), None_of_these [IsFixed = TRUE]}");
+
+
+'-----------------------------------------------------
+'Anchoring
+'-----------------------------------------------------
+
+S21_HouseholdA categorical axis("{base(), I_live_alone, 'Net : Lives with Others' net({I_live_at_home_with_my_parent_s 'I live at home with my parent(s)', I_live_with_a_spouse_domestic_partner_but_no_children 'I live with a spouse/ domestic partner, but no children', I_live_with_a_spouse_domestic_partner_with_our_child_ren 'I live with a spouse/ domestic partner, with our child(ren)', I_live_with_my_children_but_not_with_a_spouse_or_domestic_partner 'I live with my children, but not with a spouse or domestic partner', I_live_with_roommates_not_in_a_dorm 'I live with roommates (not in a dorm)', I_live_in_a_college_dorm_with_or_without_roommates 'I live in a college dorm with or without roommates', Other 'Other'})}");
+S22_HouseholdB categorical axis("{base(), 'Net : Moved' net({Moved_out_of_my_parents_house 'Moved out of my parents'' house', Moved_out_of_a_home_shared_with_roommates_or_a_spouse_partner 'Moved out of a home shared with roommates or a spouse/partner', Moved_to_a_new_house_or_apartment_in_a_different_city 'Moved to a new house or apartment in a different city', Moved_to_a_new_house_or_apartment_in_the_same_city 'Moved to a new house or apartment in the same city', Moved_out_of_a_college_dorm_or_apartment 'Moved out of a college dorm or apartment', Moved_in_with_a_spouse_or_partner 'Moved in with a spouse or partner'}), None_of_these [IsFixed=True]}");
+S23_LifeEvents categorical axis("{base(), 'Net : Change in Relationships' net({Broke_up_divorced 'Broke up / divorced', Started_a_new_relationship_got_married 'Started a new relationship / got married'}), Net1 'Net : Change in Job' net({Got_a_new_job 'Got a new job', Got_laid_off_lost_a_job 'Got laid off / lost a job'}), Had_a_baby, Net2 'Net : Change in School' net({Graduated_from_school 'Graduated from school', Went_back_to_school 'Went back to school'}), None_of_these [IsFixed=True]}");
+R2_S18_ShowView categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+
+'S17_PlatformP3M1 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M2 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M3 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M4 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M5 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M6 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M7 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M8 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M9 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M10 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M11 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M12 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M13 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M14 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M15 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M16 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M17 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M18 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M19 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S17_PlatformP3M20 categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'
+S20_ShortVidP3M categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+
+
+
+Industry_A categorical axis("{base(), .., None_of_the_above [IsFixed = TRUE]}");
+S10_EthnicityB categorical axis("{base(), .., Prefer_not_to_answer [IsFixed = TRUE]}");
+S12_Internet categorical axis("{base(), .., Don_t_have_a_broadband_Internet_connection_at_home_but_have_4G_or_higher_mobile_data_plan [IsFixed = TRUE], Don_t_have_any_Internet_connection [IsFixed=TRUE],Don_t_know_not_sure [IsFixed=TRUE]}");
+K_S13_TVService categorical axis("{base(), .., Some_other_way [IsFixed = TRUE], I_don_t_currently_receive_live_scheduled_TV_in_my_home [IsFixed = TRUE]}");
+S25_StreamDevice categorical axis("{base(), .., None_of_the_above [IsFixed = TRUE]}");
+S26_ConsoleType categorical axis("{base(), .., GamingConsoleType_Other_type_of_gaming_console [IsFixed = TRUE]}");
+'S27_TabletType categorical axis("{base(), .., Other_type_of_tablet [IsFixed = TRUE]}");
+'S28_SmartphoneType categorical axis("{base(), .., Other_type_of_smartphone [IsFixed = TRUE]}");
+'S34_AmazonSubA categorical axis("{base(), .., Don_t_know [IsFixed = TRUE]}");
+'S45_OrigHowHeard categorical axis("{base(), .., I_have_no_idea [IsFixed = TRUE]}");
+'ChurnBehavior1 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior2 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior3 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior4 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior5 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior6 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior7 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior8 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior9 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior10 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior11 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior12 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior13 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior14 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior15 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior16 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior17 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior18 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior19 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior20 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'ChurnBehavior21 categorical axis("{base(), .., I_kept_my_service_as_is [IsFixed = TRUE], I_did_not_sign_up_for_this_service [IsFixed = TRUE]}");
+'WhereGoCancelA categorical axis("{base(), .., I_no_longer_watch_the_programs_I_used_to_watch_through_pay_TV [IsFixed = TRUE]}");
+'WhereGoCancelB categorical axis("{base(), .., I_no_longer_watch_or_follow_local_news_or_local_sports [IsFixed = TRUE]}");
+'WhyKeep categorical axis("{base(), .., I_don_t_plan_on_keeping_my_pay_TV_service [IsFixed = TRUE]}");
+'WhyCancel categorical axis("{base(), .., Other [IsFixed = TRUE]}");
+'SignUpFut categorical axis("{base(), .., Nothing_would_get_me_to_sign_up [IsFixed = TRUE]}");
+''TVDevShare categorical axis("{base(), .., I_don’t_watch_this_type_of_content [IsFixed = TRUE]}");
+'PlatAttributes1 categorical axis("{base(), .., None_of_these_describe_why_I_watch_content_this_way [IsFixed = TRUE]}");
+'PlatAttributes2 categorical axis("{base(), .., None_of_these_describe_why_I_watch_content_this_way [IsFixed = TRUE]}");
+'PlatAttributes3 categorical axis("{base(), .., None_of_these_describe_why_I_watch_content_this_way [IsFixed = TRUE]}");
+'PlatAttributes4 categorical axis("{base(), .., None_of_these_describe_why_I_watch_content_this_way [IsFixed = TRUE]}");
+'PlatAttributes5 categorical axis("{base(), .., None_of_these_describe_why_I_watch_content_this_way [IsFixed = TRUE]}");
+'PlatAttributes6 categorical axis("{base(), .., None_of_these_describe_why_I_watch_content_this_way [IsFixed = TRUE]}");
+'PlatAttributes7 categorical axis("{base(), .., None_of_these_describe_why_I_watch_content_this_way [IsFixed = TRUE]}");
+'PlatAttributes8 categorical axis("{base(), .., None_of_these_describe_why_I_watch_content_this_way [IsFixed = TRUE]}");
+'PlatAttributes9 categorical axis("{base(), .., None_of_these_describe_why_I_watch_content_this_way [IsFixed = TRUE]}");
+'PlatAttributes10 categorical axis("{base(), .., None_of_these_describe_why_I_watch_content_this_way [IsFixed = TRUE]}");
+'PlatAttributes11 categorical axis("{base(), .., None_of_these_describe_why_I_watch_content_this_way [IsFixed = TRUE]}");
+'ShowHowHeard categorical axis("{base(), .., I_have_no_idea [IsFixed = TRUE]}");
+'OldShows categorical axis("{base(), .., None_of_These [IsFixed = TRUE]}");
+'HowAdInt categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'QData categorical axis("{base(), .., Don_t_know_not_sure [IsFixed = TRUE]}");
+'HH4_S23_LifeEvents categorical axis("{base(), .., None_of_these [IsFixed = TRUE]}");
+'S44_StreamOrig categorical axis("{base(), Net2 'Net : Hulu' net({CASUAL 'CASUAL', DIFFICULT_PEOPLE 'DIFFICULT PEOPLE', EAST_LOS_HIGH 'EAST LOS HIGH', HARLOTS 'HARLOTS', SHUT_EYE 'SHUT EYE', THE_HANDMAID_S_TALE 'THE HANDMAID''S TALE', THE_MINDY_PROJECT 'THE MINDY PROJECT', THE_PATH 'THE PATH'}), 'Net : Netflix' net({_13_REASONS_WHY '13 REASONS WHY', A_SERIES_OF_UNFORTUNATE_EVENTS 'A SERIES OF UNFORTUNATE EVENTS', BLOODLINE 'BLOODLINE', BOJACK_HORSEMAN 'BOJACK HORSEMAN', DEAR_WHITE_PEOPLE 'DEAR WHITE PEOPLE', FULLER_HOUSE 'FULLER HOUSE', GILMORE_GIRLS_A_YEAR_IN_THE_LIFE 'GILMORE GIRLS: A YEAR IN THE LIFE', GLOW 'GLOW', GRACE_AND_FRANKIE 'GRACE AND FRANKIE', HOUSE_OF_CARDS 'HOUSE OF CARDS', LONGMIRE 'LONGMIRE', LOVE 'LOVE', MAKING_A_MURDERER 'MAKING A MURDERER', MARVEL_S_DAREDEVIL 'MARVEL''S DAREDEVIL', MARVEL_S_JESSICA_JONES 'MARVEL''S JESSICA JONES', MARVEL_S_LUKE_CAGE 'MARVEL''S LUKE CAGE', MASTER_OF_NONE 'MASTER OF NONE', NARCOS 'NARCOS', ORANGE_IS_THE_NEW_BLACK 'ORANGE IS THE NEW BLACK', OZARK 'OZARK', SANTA_CLARITA_DIET 'SANTA CLARITA DIET', SENSE_8 'SENSE 8', STRANGER_THINGS 'STRANGER THINGS', THE_CROWN 'THE CROWN', THE_RANCH 'THE RANCH', TRAILER_PARK_BOYS 'TRAILER PARK BOYS', UNBREAKABLE_KIMMY_SCHMIDT 'UNBREAKABLE KIMMY SCHMIDT'}), Net1 'Net : Amazon' net({BOSCH 'BOSCH', CATASTROPHE 'CATASTROPHE', GOLIATH 'GOLIATH', HAND_OF_GOD 'HAND OF GOD', I_LOVE_DICK 'I LOVE DICK', MOZART_IN_THE_JUNGLE 'MOZART IN THE JUNGLE', PATRIOT 'PATRIOT', RED_OAKS 'RED OAKS', SNEAKY_PETE 'SNEAKY PETE', THE_GRAND_TOUR 'THE GRAND TOUR', THE_MAN_IN_THE_HIGH_CASTLE 'THE MAN IN THE HIGH CASTLE', Z_THE_BEGINNING_OF_EVERYTHING 'Z: THE BEGINNING OF EVERYTHING'}), None_of_these [IsFixed=True]}");
+'
+'PhoneProv categorical axis("{base(), .., Other [IsFixed = TRUE], Don_t_know_not_sure [IsFixed = TRUE]}");
+'ISP categorical axis("{base(), .., Other [IsFixed = TRUE], Don_t_know_not_sure [IsFixed = TRUE]}");
+'NetSiteFreq categorical axis("{base(), Every_day [IsFixed = TRUE], A_few_times_per_week [IsFixed = TRUE], Once_per_week [IsFixed = TRUE], A_few_times_per_month [IsFixed = TRUE], Once_per_month [IsFixed = TRUE], Less_than_once_per_month [IsFixed = TRUE]}");
+'-----------------------------------------------------
+'Grids - Manual
+'-----------------------------------------------------
+
+'Plat_List define { 
+'		A1 "On TV live as it airs",
+'		A2 "Recorded on a DVR ",
+'		A3 "Via internet-based services that offer live and on demand programming via internet-connected devices",
+'		A4 "Using Video On Demand for free with commercials through my TV provider’s set-top box",
+'		A5 "Using Video On Demand through my subscription to premium channels",
+'		A6 "On DVDs or Blu-ray Discs",
+'		A7 "For free with commercials on network websites",
+'		A8 "For free with commercials through network apps",
+'		A9 "For free on websites/apps from my TV service provider ",
+'		A10 "For free with commercials through websites like Crackle, Tubi TV, or Pluto TV",
+'		A11 "Through a Netflix subscription",
+'		A12 "Through a Hulu subscription",
+'		A13 "Through an Amazon Prime subscription",
+'		A14 "Through another paid subscription streaming service",
+'		A15 "Streaming TV shows over the Internet using HBO GO",
+'		A16 "Streaming TV shows over the Internet using Showtime Anytime",
+'		A17 "Paying to digitally own shows without commercials",
+'		A18 "For free from torrent or similar websites",
+'	None
+'};
+'
+'
+'
+'S17_PlatformP3M "Cell" loop
+'{
+'    B1 "Cell 1 (FILL)",
+'    B2 "Cell 2 (FILL)",
+'    B3 "Cell 3 (FILL)",
+'    B4 "Cell 4 (FILL)"
+'} fields
+'	(
+'	    "TopBox" "%On a TV" 
+'	    categorical {use Plat_List} axis("{base(), .., None [IsHidden=TRUE]}");
+'	    
+'	    "Top2Box" "%On a TV or On a computer" 
+'	    categorical {use Plat_List} axis("{base(), .., None [IsHidden=TRUE]}");
+'	
+'	) expand grid;
+
+
+	 
+End Metadata
+
+'-----------------------------------------------------
+'Assign Values for Sumary Variables
+'-----------------------------------------------------
+
+Event(OnNextCase, "")
+
+
+'-----------------------------------------------------
+'Paste in Code from OnNextCase.txt
+'-----------------------------------------------------
+
+    ' S15_Equipment
+    CreateGridSummary(S15_Equipment, S15_Equipment_TB, {Don_t_own}, "Column")
+
+    ' S15_Equipment
+    CreateGridSummary(S15_Equipment, S15_Equipment_2B, {Own_but_have_not_used_to_watch_video_in_the_past_3_months}, "Column")
+
+    ' S15_Equipment
+    CreateGridSummary(S15_Equipment, S15_Equipment_3B, {Own_and_have_used_to_watch_video_in_the_past_3_months}, "Column")
+
+    ' S15_Equipment
+    CreateGridSummary(S15_Equipment, S15_Equipment_4B, {No}, "Column")
+
+    ' S15_Equipment
+    CreateGridSummary(S15_Equipment, S15_Equipment_5B, {Yes}, "Column")
+
+    ' S16_ContentP3M
+    CreateGridSummary(S16_ContentP3M, S16_ContentP3M_TB, {A_television_in_my_home_including_through_devices_like_a_DVD_or_Blu_ray_player_DVR_game_console_Roku_or_Apple_TV_connected_through_a_computer}, "Column")
+
+    ' S16_ContentP3M
+    CreateGridSummary(S16_ContentP3M, S16_ContentP3M_2B, {A_computer_desktop_or_laptop}, "Column")
+
+    ' S16_ContentP3M
+    CreateGridSummary(S16_ContentP3M, S16_ContentP3M_3B, {A_smartphone}, "Column")
+
+    ' S16_ContentP3M
+    CreateGridSummary(S16_ContentP3M, S16_ContentP3M_4B, {A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB}, "Column")
+
+    ' S16_ContentP3M
+    CreateGridSummary(S16_ContentP3M, S16_ContentP3M_5B, {A_digital_projector}, "Column")
+
+    ' S16_ContentP3M
+    CreateGridSummary(S16_ContentP3M, S16_ContentP3M_6B, {I_don_t_watch_this_type_of_content_in_any_of_these_ways}, "Column")
+
+    ' S16_ContentP3M
+    CreateGridSummary(S16_ContentP3M, S16_ContentP3M_7B, {I_don_t_watch_this_type_of_content_at_all}, "Column")
+
+    ' S17_PlatformP3M
+    CreateGridSummary(S17_PlatformP3M, S17_PlatformP3M_TB, {On_a_TV}, "Column")
+
+    ' S17_PlatformP3M
+    CreateGridSummary(S17_PlatformP3M, S17_PlatformP3M_2B, {On_a_computer}, "Column")
+
+    ' S17_PlatformP3M
+    CreateGridSummary(S17_PlatformP3M, S17_PlatformP3M_3B, {On_a_tablet}, "Column")
+
+    ' S17_PlatformP3M
+    CreateGridSummary(S17_PlatformP3M, S17_PlatformP3M_4B, {On_a_smartphone}, "Column")
+
+    ' S17_PlatformP3M
+    CreateGridSummary(S17_PlatformP3M, S17_PlatformP3M_5B, {None_of_these}, "Column")
+
+    ' S17_PlatformP3M
+    CreateGridSummary(S17_PlatformP3M, S17_PlatformP3M_T4B, {On_a_TV,On_a_computer,On_a_tablet,On_a_smartphone}, "Column")
+
+    ' S17_PlatformP3M
+    CreateGridSummary(S17_PlatformP3M, S17_PlatformP3M_MB, {On_a_tablet,On_a_smartphone}, "Column")
+
+    ' S16_ContentP3M
+    CreateGridSummary(S16_ContentP3M, S16_ContentP3M_T4B, {A_computer_desktop_or_laptop,A_smartphone,A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB}, "Column")
+
+    ' S16_ContentP3M
+    CreateGridSummary(S16_ContentP3M, S16_ContentP3M_MB, {A_smartphone,A_tablet_e_g_iPad_Amazon_Fire_or_Samsung_Galaxy_TAB}, "Column")
+
+
+
+End Event
+
+        
+InputDatasource(myInputDataSource, "GenPar")
+    ConnectionString = "Provider=mrOleDB.Provider.2; _
+    	Data Source=mrSavDsc; _
+    	Location=" + InputSAV + "; _
+    	Initial Catalog=" + InputMDD
+    	SelectQuery = "Select * From hdata"
+End InputDatasource
+
+ 
+ OutputDataSource(DDFOutput)
+   ConnectionString = "Provider=mrOleDB.Provider.2; _
+       Data Source=mrDataFileDsc; _
+       Location=" + TargetDDF + "; _
+       MR Init Overwrite=1"         
+   MetaDataOutputName = TargetMdd  
+End OutputDataSource
