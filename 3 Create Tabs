@@ -37,8 +37,8 @@ Screener = 0
 PrevWt = 0
 Client = 1
 Neilsen = 0
-Counts = 0 'Use Indices in VergeAll
-PerCounts = 1 'Click on StatTesting 
+Counts = 1 'Use Indices in VergeAll
+PerCounts = 0 'Click on StatTesting 
 '*******************************************'
 '	Country Numbers to Run					'
 '*******************************************'
